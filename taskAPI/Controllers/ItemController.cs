@@ -15,46 +15,81 @@ namespace taskAPI.Controllers
 
         [HttpGet("GetAll")]
         
-        public ActionResult<List<Item>> Get()
+        public List<Item> Get()
         {
-            Console.WriteLine("pls");
-            return Ok(DataContext.items);
-
+            SaveManager saveManager = new SaveManager();
+            return saveManager.GetTasks();
         }
 
 
-        [HttpPost("AddOrUpdate")]
-        public ActionResult<Item> AddOrUpdate([FromBody] Item item)
+        [HttpPost("AddOrUpdateTask")]
+        public Item AddOrUpdateTask([FromBody] Task item)
         {
-            Console.WriteLine("Here :)");
             if(item == null)
             {
-                return BadRequest();
+                return null;
             }
 
-            for(int i = 0; i < DataContext.items.Count; i++)
-            {
-                if (DataContext.items[i].Name == item.Name)
-                {
-                    DataContext.items.RemoveAt(i);
-                    DataContext.items.Insert(i, item);
+            SaveManager saveManager = new SaveManager();
+            var items = saveManager.GetTasks();
 
-                    return Ok(item);
+            for(int i = 0; i < items.Count; i++)
+            {
+                if (items[i].Name == item.Name)
+                {
+                    items.RemoveAt(i);
+                    items.Insert(i, item);
+
+                    return item;
                 }
             }
 
-            DataContext.items.Add(item);
-            return Ok(item);
+            items.Add(item);
+            saveManager.SetList(items);
+
+            return item;
+        }
+
+        [HttpPost("AddOrUpdateAppointment")]
+        public CalendarAppointment AddOrUpdateAppointment([FromBody] CalendarAppointment item)
+        {
+            if (item == null)
+            {
+                return null;
+            }
+
+            SaveManager saveManager = new SaveManager();
+            var items = saveManager.GetTasks();
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (items[i].Name == item.Name)
+                {
+                    items.RemoveAt(i);
+                    items.Insert(i, item);
+
+                    return item;
+                }
+            }
+
+            items.Add(item);
+            saveManager.SetList(items);
+
+            return item;
         }
 
         [HttpPost("Delete")]
         public ActionResult<Item> Delete([FromBody] string name)
         {
-            for (int i = 0; i < DataContext.items.Count; i++)
+            SaveManager saveManager = new SaveManager();
+            var items = saveManager.GetTasks();
+
+            for (int i = 0; i < items.Count; i++)
             {
-                if (DataContext.items[i].Name == name)
+                if (items[i].Name == name)
                 {
-                    DataContext.items.RemoveAt(i);
+                    items.RemoveAt(i);
+                    saveManager.SetList(items);
                     return Ok(name);
                 }
             }
@@ -65,11 +100,9 @@ namespace taskAPI.Controllers
         [HttpPost("UpdateList")]
         public ActionResult<List<Item>> UpdateList([FromBody] List<Item> newItems)
         {
+            SaveManager saveManager = new SaveManager();
+            saveManager.SetList(newItems);
             DataContext.items.Clear();
-            for(int i = 0; i < newItems.Count; i++)
-            {
-                DataContext.items.Add(newItems[i]);
-            }
             return Ok(newItems);
         }
     }
